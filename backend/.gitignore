@@ -1,0 +1,33 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual env
+venv/
+.env/
+.env.*
+.venv/
+
+# Django / Flask / FastAPI common (если будет)
+db.sqlite3
+instance/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Migrations (если не хочешь коммитить — обычно НЕ игнорят в Django)
+# migrations/
