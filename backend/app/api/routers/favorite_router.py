@@ -1,6 +1,6 @@
-from app.database.methods.favorite_methods import FavoriteService
-from app.api.security import get_current_user, require_same_user_or_admin
-from app.database.models import User
+from backend.database.methods.favorite_methods import FavoriteService
+from backend.api.security import get_current_user, require_same_user_or_admin
+from backend.database.models import User
 
 from .include import *
 

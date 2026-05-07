@@ -1,6 +1,6 @@
-from app.database.methods.ticket_methods import TicketService
-from app.api.security import get_current_user, require_admin, require_same_user_or_admin
-from app.database.models import User, UserRole
+from backend.database.methods.ticket_methods import TicketService
+from backend.api.security import get_current_user, require_admin, require_same_user_or_admin
+from backend.database.models import User, UserRole
 from fastapi import HTTPException, status
 
 from .include import *
@@ -31,9 +31,16 @@ async def create_ticket(
 )
 async def get_ticket_by_id(
     ticket_id: int,
-    ticket_db: Annotated[TicketService, Depends(sql_helper_factory(TicketService))]
+    ticket_db: Annotated[TicketService, Depends(sql_helper_factory(TicketService))],
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
-    return await ticket_db.get_by_id(ticket_id)
+    ticket = await ticket_db.get_by_id(ticket_id)
+    if current_user.role != UserRole.ADMIN and ticket.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав для просмотра билета.",
+        )
+    return ticket
 
 
 @ticket_router.get(

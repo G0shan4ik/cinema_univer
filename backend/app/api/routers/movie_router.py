@@ -1,6 +1,6 @@
-from app.database.methods.movie_methods import MovieService
-from app.api.security import require_admin
-from app.database.models import User
+from backend.database.methods.movie_methods import MovieService
+from backend.api.security import require_admin
+from backend.database.models import User
 
 from .include import *
 
@@ -36,23 +36,41 @@ async def get_movie_by_id(
 
 @movie_router.get(
     "/movies",
-    response_model=list[MovieResponse]
+    response_model=MovieListResponse
 )
 async def get_movies(
     movie_db: Annotated[MovieService, Depends(sql_helper_factory(MovieService))],
-    page: int = 1,
-    per_page: int = 10,
+    page: int | None = None,
+    per_page: int | None = None,
+    limit: int | None = None,
+    offset: int | None = None,
     genre: str | None = None,
     search: str | None = None,
     min_rating: float | None = None,
 ):
-    return await movie_db.get_all(
+    effective_limit = limit or per_page or 5
+    effective_offset = offset if offset is not None else (((page or 1) - 1) * effective_limit)
+    items = await movie_db.get_all(
         page=page,
         per_page=per_page,
+        limit=effective_limit,
+        offset=effective_offset,
         genre=genre,
         search=search,
         min_rating=min_rating,
     )
+    total = await movie_db.get_total_count(
+        genre=genre,
+        search=search,
+        min_rating=min_rating,
+    )
+    return {
+        "items": items,
+        "total": total,
+        "limit": effective_limit,
+        "offset": effective_offset,
+        "has_more": effective_offset + len(items) < total,
+    }
 
 
 @movie_router.patch(

@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from app.database.methods.session_methods import SessionService
-from app.database.methods.ticket_methods import TicketService
-from app.api.security import require_admin
-from app.database.models import User
+from backend.database.methods.session_methods import SessionService
+from backend.database.methods.ticket_methods import TicketService
+from backend.api.security import require_admin
+from backend.database.models import User
 
 from .include import *
 

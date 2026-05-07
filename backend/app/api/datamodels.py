@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
 
 class BaseResponseModel(BaseModel):
@@ -58,6 +58,18 @@ class UserCreate(BaseModel):
     email: EmailStr
     name: str
     password: str
+    secret_question: Optional[str] = None
+    secret_answer: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_secret_pair(self):
+        has_question = bool(self.secret_question and self.secret_question.strip())
+        has_answer = bool(self.secret_answer and self.secret_answer.strip())
+
+        if has_question != has_answer:
+            raise ValueError("Для восстановления нужно указать и секретный вопрос, и ответ.")
+
+        return self
 
 
 class RefreshTokenRequest(BaseModel):
@@ -84,13 +96,45 @@ class UserRequestUpdate(BaseModel):
 
 class SetKeyword(BaseModel):
     user_id: int
-    keyword: str
+    keyword: Optional[str] = None
+    secret_question: Optional[str] = None
+    secret_answer: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_secret_payload(self):
+        has_keyword = bool(self.keyword and self.keyword.strip())
+        has_question = bool(self.secret_question and self.secret_question.strip())
+        has_answer = bool(self.secret_answer and self.secret_answer.strip())
+
+        if has_question != has_answer:
+            raise ValueError("Секретный вопрос и ответ нужно передавать вместе.")
+
+        if not has_keyword and not (has_question and has_answer):
+            raise ValueError("Нужно передать ключевое слово или секретный вопрос с ответом.")
+
+        return self
 
 
 class RecoverPassword(BaseModel):
     email: EmailStr
-    keyword: str
+    keyword: Optional[str] = None
+    secret_question: Optional[str] = None
+    secret_answer: Optional[str] = None
     new_password: str
+
+    @model_validator(mode="after")
+    def validate_recovery_payload(self):
+        has_keyword = bool(self.keyword and self.keyword.strip())
+        has_question = bool(self.secret_question and self.secret_question.strip())
+        has_answer = bool(self.secret_answer and self.secret_answer.strip())
+
+        if has_question != has_answer:
+            raise ValueError("Для восстановления нужно указать и секретный вопрос, и ответ.")
+
+        if not has_keyword and not (has_question and has_answer):
+            raise ValueError("Укажите ключевое слово или секретный вопрос с ответом.")
+
+        return self
 
 
 # ---------------- MOVIE ----------------
@@ -124,6 +168,14 @@ class MovieResponse(BaseResponseModel):
     rating: Optional[float]
     poster_url: Optional[str]
     release_date: Optional[date]
+
+
+class MovieListResponse(BaseModel):
+    items: list[MovieResponse]
+    total: int
+    limit: int
+    offset: int
+    has_more: bool
 
 
 # ---------------- HALL ----------------

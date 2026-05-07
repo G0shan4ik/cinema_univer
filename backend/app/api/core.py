@@ -8,8 +8,8 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.exc import IntegrityError
 
-from app.database.core import init_database
-from app.database.seed import seed_initial_data
+from backend.database.core import init_database
+from backend.database.seed import seed_initial_data
 
 
 load_dotenv()
@@ -50,7 +50,7 @@ async def assertion_error_handler(_: Request, exc: AssertionError):
 async def value_error_handler(_: Request, exc: ValueError):
     logger.warning(str(exc))
     return JSONResponse(
-        status_code=404,
+        status_code=400,
         content={"detail": str(exc)},
     )
 

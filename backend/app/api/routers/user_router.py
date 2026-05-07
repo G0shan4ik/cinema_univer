@@ -1,13 +1,13 @@
-from app.database.methods.user_methods import UserService
+from backend.database.methods.user_methods import UserService
 from fastapi import Header
 from .include import *
-from app.api.security import (
+from backend.api.security import (
     get_current_user,
     require_admin,
     require_same_user_or_admin,
     session_manager,
 )
-from app.database.models import User
+from backend.database.models import User
 
 user_router = APIRouter(
     tags=['Users']
@@ -31,7 +31,9 @@ async def create_user(
     created_id: int = await user_db.create_user(
         user.email,
         user.name,
-        user.password
+        user.password,
+        secret_question=user.secret_question,
+        secret_answer=user.secret_answer,
     )
     return {
         'created_id': created_id
@@ -162,7 +164,12 @@ async def set_keyword(
     current_user: Annotated[User, Depends(get_current_user)],
 ):
     require_same_user_or_admin(current_user, data.user_id)
-    result: bool = await user_db.set_keyword(data.user_id, data.keyword)
+    result: bool = await user_db.set_secret_data(
+        user_id=data.user_id,
+        keyword=data.keyword,
+        secret_question=data.secret_question,
+        secret_answer=data.secret_answer,
+    )
     return {
         'status': result
     }
@@ -178,8 +185,10 @@ async def recover_password(
 ):
     result: bool = await user_db.recover_password(
         data.email,
-        data.keyword,
-        data.new_password
+        data.new_password,
+        keyword=data.keyword,
+        secret_question=data.secret_question,
+        secret_answer=data.secret_answer,
     )
     return {
         'status': result

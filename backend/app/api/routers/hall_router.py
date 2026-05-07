@@ -1,6 +1,6 @@
-from app.database.methods.hall_methods import HallService
-from app.api.security import require_admin
-from app.database.models import User
+from backend.database.methods.hall_methods import HallService
+from backend.api.security import require_admin
+from backend.database.models import User
 
 from .include import *
 
