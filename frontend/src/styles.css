@@ -1,0 +1,148 @@
+:root {
+  color-scheme: dark;
+  --cinema-bg: #07111b;
+  --cinema-surface: rgba(17, 24, 39, 0.88);
+  --cinema-border: rgba(148, 163, 184, 0.18);
+  --cinema-text: #f8fafc;
+  --cinema-muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(245, 158, 11, 0.22), transparent 24%),
+    radial-gradient(circle at top right, rgba(251, 191, 36, 0.12), transparent 18%),
+    linear-gradient(180deg, #040b12 0%, #07111b 50%, #02060c 100%);
+  color: var(--cinema-text);
+}
+
+a {
+  text-decoration: none;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.app-shell {
+  background: transparent;
+}
+
+.app-navbar {
+  backdrop-filter: blur(18px);
+  background: rgba(2, 6, 12, 0.8) !important;
+}
+
+.tracking-wide {
+  letter-spacing: 0.08em;
+}
+
+.hero-panel,
+.card,
+.list-group-item {
+  background: var(--cinema-surface) !important;
+  border-color: var(--cinema-border) !important;
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-panel::after {
+  content: '';
+  position: absolute;
+  inset: auto -15% -35% auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.2), transparent 65%);
+  pointer-events: none;
+}
+
+.hero-poster,
+.movie-card__poster,
+.detail-poster {
+  object-fit: cover;
+  width: 100%;
+}
+
+.hero-poster {
+  min-height: 260px;
+  max-height: 320px;
+}
+
+.movie-card__poster {
+  height: 280px;
+}
+
+.detail-poster {
+  min-height: 100%;
+  max-height: 640px;
+}
+
+.movie-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.text-secondary,
+.form-label,
+.form-text,
+.small {
+  color: var(--cinema-muted) !important;
+}
+
+.form-control,
+.form-select,
+.form-control:focus,
+.form-select:focus {
+  background: rgba(15, 23, 42, 0.82);
+  color: var(--cinema-text);
+  border-color: var(--cinema-border);
+  box-shadow: none;
+}
+
+.form-control::placeholder {
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.btn-outline-light,
+.btn-outline-warning,
+.btn-light,
+.btn-warning {
+  box-shadow: none;
+}
+
+.session-button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.session-button:hover {
+  transform: translateY(-1px);
+}
+
+.footer-shell {
+  background: rgba(2, 6, 12, 0.55);
+}
+
+@media (max-width: 767.98px) {
+  .movie-card__poster {
+    height: 240px;
+  }
+
+  .detail-poster {
+    max-height: 420px;
+  }
+}
