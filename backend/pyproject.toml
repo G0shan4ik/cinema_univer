@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "app"
+version = "0.1.0"
+description = ""
+authors = ["G0shan4ik <egorkononec64@gmail.com>"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.112.0"
+sqlalchemy = "^2.0.31"
+loguru = "^0.7.2"
+uvicorn = "^0.30.5"
+faker = "^26.1.0"
+python-dotenv = "^1.0.1"
+psycopg = {extras = ["binary"], version = "^3.2.4"}
+bcrypt = "^4.2.1"
+pydantic = {extras = ["email"], version = "^2.10.6"}
+
+
+[tool.poetry.scripts]
+dev = "main:start_dev"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
