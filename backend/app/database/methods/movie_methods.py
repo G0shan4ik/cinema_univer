@@ -12,6 +12,25 @@ from .include import (
 
 
 class MovieService(BaseDatabaseDep):
+    async def get_total_count(
+        self,
+        genre: str | None = None,
+        search: str | None = None,
+        min_rating: float | None = None,
+    ) -> int:
+        stmt = select(func.count(Movie.id))
+
+        if genre:
+            stmt = stmt.where(Movie.genre == genre)
+
+        if search:
+            stmt = stmt.where(Movie.title.ilike(f"%{search}%"))
+
+        if min_rating is not None:
+            stmt = stmt.where(Movie.rating >= min_rating)
+
+        return (await self.session.execute(stmt)).scalar_one()
+
     async def create_movie(self, data: dict) -> int:
         assert data["duration_minutes"] > 0, "Длительность фильма должна быть больше 0"
 
@@ -29,13 +48,19 @@ class MovieService(BaseDatabaseDep):
 
     async def get_all(
         self,
-        page: int = 1,
-        per_page: int = 10,
+        page: int | None = None,
+        per_page: int | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
         genre: str | None = None,
         search: str | None = None,
         min_rating: float | None = None,
     ) -> list[Movie]:
-        offset = (page - 1) * per_page
+        if limit is None:
+            limit = per_page or 5
+        if offset is None:
+            normalized_page = page or 1
+            offset = (normalized_page - 1) * limit
 
         stmt = select(Movie)
 
@@ -48,7 +73,7 @@ class MovieService(BaseDatabaseDep):
         if min_rating is not None:
             stmt = stmt.where(Movie.rating >= min_rating)
 
-        stmt = stmt.order_by(Movie.id.desc()).offset(offset).limit(per_page)
+        stmt = stmt.order_by(Movie.id.desc()).offset(offset).limit(limit)
         result = await self.session.execute(stmt)
         return result.scalars().all()
 

@@ -13,25 +13,74 @@ class UserService(BaseDatabaseDep):
         )
         return (await self.session.execute(stmt)).scalar_one_or_none()
 
-    async def create_user(self, email: str, name: str, password: str) -> int:
+    async def create_user(
+        self,
+        email: str,
+        name: str,
+        password: str,
+        secret_question: str | None = None,
+        secret_answer: str | None = None,
+    ) -> int:
         temp_user = User()
         temp_user.password = password
-        password_hash = temp_user.password_hash
 
         result = await self.get_by_email(email)
         assert not result, 'Пользователь уже существует!'
 
-        stmt = insert(User).values(
-            email=email,
-            name=name,
-            password_hash=password_hash,
-            role=UserRole.USER,
-            is_active=True
-        ).returning(User.id)
+        insert_values = {
+            "email": email,
+            "name": name,
+            "password_hash": temp_user.password_hash,
+            "role": UserRole.USER,
+            "is_active": True,
+        }
+
+        if secret_question is not None or secret_answer is not None:
+            assert secret_question and secret_question.strip(), "Секретный вопрос обязателен"
+            assert secret_answer and secret_answer.strip(), "Ответ на секретный вопрос обязателен"
+            temp_user.set_secret_answer(secret_question, secret_answer)
+            insert_values["secret_question"] = temp_user.secret_question
+            insert_values["secret_answer_hash"] = temp_user.secret_answer_hash
+
+        stmt = insert(User).values(**insert_values).returning(User.id)
 
         result = await self.session.execute(stmt)
         await self.session.commit()
         return result.scalar()
+
+    async def set_secret_data(
+        self,
+        user_id: int,
+        keyword: str | None = None,
+        secret_question: str | None = None,
+        secret_answer: str | None = None,
+    ) -> bool:
+        user = await self.get_by_id(user_id)
+
+        update_values: dict[str, str | None] = {}
+
+        if keyword is not None and keyword.strip():
+            user.set_keyword(keyword.strip())
+            update_values["keyword_hash"] = user.keyword_hash
+
+        if secret_question is not None or secret_answer is not None:
+            assert secret_question and secret_question.strip(), "Секретный вопрос обязателен"
+            assert secret_answer and secret_answer.strip(), "Ответ на секретный вопрос обязателен"
+            user.set_secret_answer(secret_question, secret_answer)
+            update_values["secret_question"] = user.secret_question
+            update_values["secret_answer_hash"] = user.secret_answer_hash
+
+        assert update_values, "Нет данных для сохранения"
+
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(**update_values)
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+        return True
 
     async def sign_in(self, email: str, password: str) -> Optional[dict]:
         result = await self.get_by_email(email)
@@ -94,29 +143,28 @@ class UserService(BaseDatabaseDep):
             await self.session.commit()
 
             return True
-
-        raise ValueError('Пользователь не найден!')
+        raise AssertionError('Пользователь не найден!')
 
     async def set_keyword(self, user_id: int, keyword: str) -> bool:
-        user = await self.get_by_id(user_id)
+        return await self.set_secret_data(user_id=user_id, keyword=keyword)
 
-        user.set_keyword(keyword)
-
-        stmt = (
-            update(User)
-            .where(User.id == user_id)
-            .values(keyword_hash=user.keyword_hash)
-        )
-        await self.session.execute(stmt)
-        await self.session.commit()
-
-        return True
-
-    async def recover_password(self, email: str, keyword: str, new_password: str) -> bool:
+    async def recover_password(
+        self,
+        email: str,
+        new_password: str,
+        keyword: str | None = None,
+        secret_question: str | None = None,
+        secret_answer: str | None = None,
+    ) -> bool:
         user = await self.get_by_email(email)
 
         assert user, 'Пользователь не найден!'
-        assert user.check_keyword(keyword), 'Неверное ключевое слово!'
+        if secret_question or secret_answer:
+            assert secret_question and secret_answer, 'Укажите секретный вопрос и ответ'
+            assert user.check_secret_answer(secret_question, secret_answer), 'Неверный ответ на секретный вопрос!'
+        else:
+            assert keyword, 'Укажите ключевое слово или вопрос и ответ'
+            assert user.check_keyword(keyword), 'Неверное ключевое слово!'
 
         temp_user = User()
         temp_user.password = new_password

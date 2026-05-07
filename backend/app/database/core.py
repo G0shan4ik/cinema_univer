@@ -1,8 +1,9 @@
 import sys
 from os import getenv
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from loguru import logger
+from sqlalchemy import inspect
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from dotenv import load_dotenv
@@ -41,13 +42,31 @@ session_maker: async_sessionmaker[AsyncSession] = async_sessionmaker(
 
 async def init_database():
     async with engine.begin() as connection:
-
-        # await connection.run_sync(Base.metadata.drop_all)
+        await connection.run_sync(Base.metadata.drop_all)
 
         await connection.run_sync(Base.metadata.create_all)
+        await connection.run_sync(_ensure_user_table_columns)
         logger.debug(
             "Created tables: " + (", ".join(i for i in Base.metadata.tables))
         )
+
+
+def _ensure_user_table_columns(connection):
+    inspector = inspect(connection)
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("users")}
+    missing_columns = {
+        "keyword_hash": "ALTER TABLE users ADD COLUMN keyword_hash VARCHAR(60)",
+        "secret_question": "ALTER TABLE users ADD COLUMN secret_question VARCHAR(255)",
+        "secret_answer_hash": "ALTER TABLE users ADD COLUMN secret_answer_hash VARCHAR(60)",
+    }
+
+    for column_name, ddl in missing_columns.items():
+        if column_name not in existing_columns:
+            connection.exec_driver_sql(ddl)
+            logger.info(f"Added missing column users.{column_name}")
 
 
 async def init():

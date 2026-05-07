@@ -2,8 +2,8 @@ from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
 
-from .core import session_maker
-from .models import Favorite, Hall, Movie, Session, Ticket, TicketStatus, User, UserRole
+from backend.database.core import session_maker
+from backend.database.models import Favorite, Hall, Movie, Session, Ticket, TicketStatus, User, UserRole
 
 
 async def seed_initial_data():
@@ -18,8 +18,9 @@ async def seed_initial_data():
             role=UserRole.ADMIN,
             is_active=True,
         )
-        admin.password = "admin123"
+        admin.password = "Admin123!"
         admin.set_keyword("cinema")
+        admin.set_secret_answer("Любимый фильм", "Матрица")
 
         demo_user = User(
             email="user@cinemahub.com",
@@ -27,8 +28,9 @@ async def seed_initial_data():
             role=UserRole.USER,
             is_active=True,
         )
-        demo_user.password = "user123"
+        demo_user.password = "User123!"
         demo_user.set_keyword("movies")
+        demo_user.set_secret_answer("Любимый фильм", "Интерстеллар")
 
         halls = [
             Hall(name="Зал 1", total_rows=8, seats_per_row=10),
@@ -62,6 +64,43 @@ async def seed_initial_data():
                 rating=8.4,
                 poster_url="https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=900&q=80",
                 release_date=date(2024, 6, 12),
+            ),
+
+            Movie(
+                title="asdfgas 2",
+                description="Новые эмоции приходят в команду Райли и делают подростковую жизнь еще интереснее.",
+                genre="Animation",
+                duration_minutes=103,
+                rating=8.4,
+                poster_url="https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=900&q=80",
+                release_date=date(2004, 6, 12),
+            ),
+            Movie(
+                title="asdfgddd 2",
+                description="Новые эмоции приходят в команду Райли и делают подростковую жизнь еще интереснее.",
+                genre="Animation",
+                duration_minutes=103,
+                rating=8.4,
+                poster_url="https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=900&q=80",
+                release_date=date(2023, 6, 12),
+            ),
+            Movie(
+                title="ddd 2",
+                description="Новые эмоции приходят в команду Райли и делают подростковую жизнь еще интереснее.",
+                genre="Animation",
+                duration_minutes=103,
+                rating=8.4,
+                poster_url="https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=900&q=80",
+                release_date=date(2014, 6, 11),
+            ),
+            Movie(
+                title="ssdsdsd 2",
+                description="Новые эмоции приходят в команду Райли и делают подростковую жизнь еще интереснее.",
+                genre="Animation",
+                duration_minutes=103,
+                rating=8.4,
+                poster_url="https://images.unsplash.com/photo-1514306191717-452ec28c7814?auto=format&fit=crop&w=900&q=80",
+                release_date=date(2024, 6, 22),
             ),
         ]
 

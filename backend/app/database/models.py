@@ -2,10 +2,12 @@ import enum
 from datetime import date, datetime
 from typing import Optional
 
+import re
+
 import bcrypt
 from sqlalchemy import BigInteger, Enum, Float, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from .core import Base
 
@@ -33,6 +35,8 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(60), nullable=False)
     keyword_hash: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
+    secret_question: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    secret_answer_hash: Mapped[Optional[str]] = mapped_column(String(60), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.USER)
@@ -40,25 +44,67 @@ class User(Base):
 
     @hybrid_property
     def password(self):
-        raise AttributeError('Пароль не доступен')
+        raise AttributeError('Пароль не доступен для чтения')
 
     @password.setter
-    def password(self, password: str):
+    def password(self, password):
         self.set_password(password)
 
-    def set_password(self, password: str):
-        self.password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    def set_password(self, password: str) -> None:
+        if not password:
+            raise ValueError('Пароль не может быть пустым')
+
+        if len(password) < 8:
+            raise ValueError('Пароль должен содержать минимум 8 символов')
+
+        if not re.search(r'[A-Z]', password):
+            raise ValueError('Пароль должен содержать хотя бы одну заглавную букву')
+
+        if not re.search(r'[a-z]', password):
+            raise ValueError('Пароль должен содержать хотя бы одну строчную букву')
+
+        if not re.search(r'[0-9!@#$%^&*()]', password):
+            raise ValueError('Пароль должен содержать хотя бы одну цифру или специальный символ')
+
+        salt = bcrypt.gensalt()
+        self.password_hash = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
+    def check_password(self, simple_password: str, hashed_password: Optional[str] = None) -> bool:
+        actual_hash = hashed_password or self.password_hash
+        if not actual_hash:
+            return False
+        return bcrypt.checkpw(simple_password.encode('utf-8'), actual_hash.encode('utf-8'))
+
+    @validates('password_hash')
+    def validate_password_hash(self, key, password_hash: str) -> str | None:
+        if len(password_hash) != 60:
+            raise ValueError('Некорректный хеш пароля')
+        return password_hash
 
     def set_keyword(self, keyword: str):
         self.keyword_hash = bcrypt.hashpw(keyword.encode(), bcrypt.gensalt()).decode()
-
-    def check_password(self, password: str) -> bool:
-        return bcrypt.checkpw(password.encode(), self.password_hash.encode())
 
     def check_keyword(self, keyword: str) -> bool:
         if not self.keyword_hash:
             return False
         return bcrypt.checkpw(keyword.encode(), self.keyword_hash.encode())
+
+    def set_secret_answer(self, question: str, answer: str):
+        if not question or not question.strip():
+            raise ValueError('Секретный вопрос не может быть пустым')
+        if not answer or not answer.strip():
+            raise ValueError('Ответ на секретный вопрос не может быть пустым')
+
+        self.secret_question = question.strip()
+        self.secret_answer_hash = bcrypt.hashpw(answer.strip().encode(), bcrypt.gensalt()).decode()
+
+    def check_secret_answer(self, question: str, answer: str) -> bool:
+        if not self.secret_question or not self.secret_answer_hash:
+            return False
+        return (
+            self.secret_question == question.strip()
+            and bcrypt.checkpw(answer.strip().encode(), self.secret_answer_hash.encode())
+        )
 
 
 # ---------------- MOVIE ----------------

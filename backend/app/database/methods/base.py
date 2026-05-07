@@ -1,7 +1,7 @@
 from abc import ABC
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database.models import *
+from backend.database.models import *
 
 
 class BaseDatabaseDep(ABC):
