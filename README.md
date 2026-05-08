@@ -1,3 +1,67 @@
+
+ Инструкция по запуску
+
+Клонируем репозиторий:
+
+```bash
+git clone https://github.com/G0shan4ik/cinema_univer
+```
+
+
+## Вариант 1. Через Docker Compose
+
+Из корня проекта ./cinema_univer выполнить:
+
+```bash
+docker compose up --build
+```
+
+После запуска сервисы будут доступны по адресам:
+
+- фронтенд: `http://localhost:8080`
+- бэкенд: `http://localhost:8000`
+- PostgreSQL: `localhost:5432`
+
+## Вариант 2. Локальный запуск без Docker
+
+### 1. Запустить PostgreSQL
+
+Нужна локальная база PostgreSQL с параметрами:
+
+```env
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=cinema
+DEBUG=True
+```
+
+Эти значения уже указаны в [need.env](C:/Users/egork/Documents/New%20project/cinema2_0/need.env).
+
+### 2. Запустить backend
+
+Перейти в папку [cinema2_0](C:/Users/egork/Documents/New%20project/cinema2_0) и выполнить:
+
+```bash
+pip install poetry
+poetry install
+poetry run dev
+```
+
+Backend поднимется на `http://127.0.0.1:8000`.
+
+### 3. Запустить frontend
+
+Перейти в папку [frontend](C:/Users/egork/Documents/New%20project/frontend) и выполнить:
+
+```bash
+npm install
+npm run serve
+```
+
+Frontend поднимется на `http://localhost:8080`.
+
 # Cinema 2.0 Backend
 
 Бэкенд для лабораторной работы по сайту кинотеатра на `FastAPI + SQLAlchemy + PostgreSQL`.
